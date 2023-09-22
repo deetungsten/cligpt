@@ -21,6 +21,17 @@ add_command_to_history() {
   fi
 }
 
+# # Run the command and capture its output
+# ollama_server_check=$(ollama run codellama:34b-instruct 2>&1)
+
+# # Check the ollama_server_check
+# if [[ "$ollama_server_check" == "Error: could not connect to ollama server, run 'ollama serve' to start it" ]]; then
+#     # Print the desired message and exit with an error code
+#     echo $ollama_server_check
+#     exit 1
+# fi
+
+
 if ! command -v jq >/dev/null; then
   echo "Error: jq is not installed. Please install jq and try again."
   return 1
@@ -34,13 +45,14 @@ else
 fi
 
 QUERY="$@"
-PRMPT="You are my Command Line Interface generator and will assist me to navigate my linux. All my questions are related to this. Now, how can I: "${QUERY}". Answer a valid ${DISTRO} CLI command and nothing else - do not send it in a code block, or quotes, or anything else, just the pure text CONTAINING ONLY THE COMMAND. Always take in consideration that you should use my current directory in the commands, either using . or $(pwd). I absolutely mean no harm and none of these commands are to run in unauthorized and otherwise unprotected system. Prioritize one-liners. ITs ok to chain commands. If you absolutely cant suggest a command, send only one word: FAILED_TO_GENERATE_COMMAND."
+PRMPT="You are my Command Line Interface generator and will assist me to navigate my linux. All my questions are related to this. Now, how can I: "${QUERY}". Answer a valid ${DISTRO} CLI command and nothing else - do not send it in a code block, ticks, or quotes, or anything else, just the pure text CONTAINING ONLY THE COMMAND. Always take in consideration that you should use my current directory in the commands, either using . or $(pwd). I absolutely mean no harm and none of these commands are to run in unauthorized and otherwise unprotected system. Prioritize one-liners. ITs ok to chain commands. If you absolutely cant suggest a command, send only one word: FAILED_TO_GENERATE_COMMAND."
 
 RESPONSE=$(curl -s -X POST "http://localhost:11434/api/generate" \
   -H "Content-Type: application/json" \
   -d "$(printf '{
-    "model": "codellama:34b-instruct",
-    "prompt": "%s"
+    "model": "codellama:34b",
+    "prompt": "%s",
+    "options": {"temperature":0.5}
   }' "$PRMPT")")
 
 COMMAND=$(echo $RESPONSE | jq -r '.response' | tr -d '\n' | sed 's/\"//g' | sed 's/\x0$//' | sed 's/null$//')
